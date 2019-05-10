@@ -3,4 +3,9 @@
 This is a presentation done for knowledge sharing in the workplace.
 
 It's based on Reveal.js, so it can be started simply with:
-`npm start`
+```
+git clone https://github.com/ProvoK/docker-compose-tips compose-tips
+cd compose-tips
+npm i
+npm start
+```
