@@ -1,0 +1,19 @@
+version: "3.3"
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8181:8080"
+    environment:
+      REDIS_HOST: redis
+    networks:
+      localNet:
+        aliases:
+          - ${SERVICE_ALIAS:-app}
+
+networks:
+  localNet:
+    external:
+      name: ${NETWORK_NAME}

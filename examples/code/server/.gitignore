@@ -1,0 +1,61 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.cache/
+src/*.egg-info
+
+# OSX useful to ignore
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# environment
+.Python
+env/
+venv/
+.env*
+.autoenv
+.python-version
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+
+# Sphinx documentation
+docs/_build/
+
+# Editors
+.idea
+*.iml
+## File-based project format:
+*.ipr
+*.iws
+## mpeltonen/sbt-idea plugin
+.idea_modules/
+## others
+.vscode/*
+!.vscode/launch.json
+*.swp
+.ropeproject
+
+#logging
+log/*
+logs/*
+
+# TDD development
+pytest.ini
+.pytest_cache/
+
+# Allianz session
+sessions/

@@ -1,0 +1,15 @@
+version: '3.4'
+x-logging:
+  &default-logging
+  options:
+    max-size: '12m'
+    max-file: '5'
+  driver: json-file
+
+services:
+  web:
+    image: myapp/web:latest
+    logging: *default-logging
+  db:
+    image: mysql:latest
+    logging: *default-logging

@@ -1,0 +1,512 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>reveal.js</title>
+
+		<link rel="stylesheet" href="css/reset.css">
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/monokai.css">
+
+		<!-- custom css -->
+		<link rel="stylesheet" href="css/custom.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<div class="slides">
+					<!-- INTRODUCTION -->
+					<section>
+							<h1>Docker-compose Tips</h1>
+					</section>
+					<section>
+						<h1> Index.js </h1>
+            <br/>
+						<ul>
+							<li class="fragment"> Validation </li>
+							<li class="fragment"> Environment Variables </li>
+							<li class="fragment"> Multiple compose files</li>
+							<li class="fragment"> External Networks </li>
+							<li class="fragment"> Commands </li>
+							<li class="fragment"> Anchors </li>
+						</ul>
+					</section>
+					<!-- INTRODUCTION -->
+					<!-- VALIDATION -->
+					<section>
+						<section>
+							<div class='multiCol'>
+								<div class='col'>
+									<h2> Validation </h2>
+								</div>
+								<div class='col' style='font-size: 0.8em'>
+									docker-compose <span style="color: orange">config</span> validates and <u>outputs</u> configuration.
+									<br/>
+									It's essential in more advanced usages, as we'll see.
+
+								</div>
+							</div>
+						</section>
+						<section>
+							<h2> dc config - error</h2>
+							<pre><code class="yaml" data-line-numbers="4" data-trim data-noescape>
+								# docker-compose.yml
+								version: '3.3'
+
+								service:  # Typo here
+								  app:
+								    image: nginx/alpine
+							</code></pre>
+							<pre class="fragment"><code class="shell" data-trim data-noescape>
+								$ docker-compose <span style="color: orange">config</span>
+
+								ERROR: The Compose file is invalid because:
+
+								Invalid top-level property "service".
+								Valid top-level sections for this Compose file are:
+								  version, services, networks, volumes, secrets, configs,
+								  and extensions starting with "x-".
+							</code></pre>
+							<div style='font-size: 0.6em' class="fragment" >Spoiler alert: extensions </div>
+						</section>
+						<section>
+							<h2> dc config - good boy</h2>
+							<pre><code class="yaml" data-line-numbers="4" data-trim data-noescape>
+								# docker-compose.yml
+								version: '3.3'
+
+								services:
+								  app:
+								    image: nginx/alpine
+							</code></pre>
+							<div class="fragment">
+								<pre ><code class="shell" data-trim data-noescape>
+									$ docker-compose <span style="color: orange">config</span>
+
+									services:
+									  app:
+										image: nginx/alpine
+									version: '3.3'
+								</code></pre>
+								Side note: changed order of yml sections
+							</div>
+						</section>
+					</section>
+					<!-- VALIDATION -->
+					<!-- ENV-VARIABLES -->
+					<section>
+						<section>
+							<div class='multiCol'>
+								<div class='col'>
+									<h2> Environment Variables </h2>
+								</div>
+								<div class='col' style='font-size: 0.8em'>
+									docker-compose can make use of environment variables to be more configurable and dynamic.
+								</div>
+							</div>
+						</section>
+						<section>
+							<h2> Environment Variables - Example</h2>
+							<pre><code class="yaml" data-line-numbers="6" data-trim data-noescape>
+								# docker-compose.yml
+								version: '3.3'
+
+								services:
+								  app:
+								    image: my-registry/my-docker-image:${TAG}
+							</code></pre>
+							<div class="fragment">
+								<pre><code class="shell" data-trim data-noescape>
+									$ export TAG=v3.1.0
+									$ docker-compose <span style="color: orange">config</span>
+
+									services:
+									  app:
+										image: my-registry/my-docker-image:v3.1.0
+									version: '3.3'
+								</code></pre>
+								Defaults could be provided with the syntax:
+								<br/>
+								${VARIABLE<span style="color: orange">:-default</span>} or ${VARIABLE<span style="color: orange">:default</span>}
+						</div>
+						</section>
+						<section>
+							<h2> .env special file </h2>
+							<pre><code class="bash" data-trim data-noescape>
+								# .env
+								TAG=v3.2.0
+							</code></pre>
+							<pre><code class="yaml" data-trim data-noescape>
+								# docker-compose.yml
+								version: '3.3'
+
+								services:
+								  app:
+								    image: my-registry/my-docker-image:${TAG}
+							</code></pre>
+							<div class="fragment">
+								<pre><code class="shell" data-trim data-noescape>
+									$ docker-compose <span style="color: orange">config</span>
+
+									services:
+									  app:
+										image: my-registry/my-docker-image:v3.2.0
+									version: '3.3'
+								</code></pre>
+								If a <b>.env</b> file exists, it'll be used as source for env vars.
+							</div>
+						</section>
+					</section>
+					<!-- ENV-VARIABLES -->
+					<!-- MULTIPLE FILES -->
+					<section>
+						<section>
+							<div class='multiCol'>
+								<div class='col'>
+									<h2> Multiple files </h2>
+								</div>
+								<div class='col' style='font-size: 0.8em'>
+									docker-compose can accepts more than one file, overriding values.
+									<br/>
+									This behaviour augments exponentially the compose capabilities
+								</div>
+							</div>
+						</section>
+						<section>
+							<h4> multiple files - example </h4>
+							<pre><code class="yaml" style='font-size: 0.8em' data-trim data-noescape>
+								# docker-compose.yml
+								version: "3.3"
+								services:
+								  app:
+								    image: nginx/alpine
+							</code></pre>
+							<pre><code class="yaml" style='font-size: 0.8em' data-trim data-noescape>
+								# docker-compose.prod.yml
+								version: "3.3"
+								services:
+								  app:
+								    volumes:
+									  - "./config/:/app/config/"
+							</code></pre>
+							<pre class="fragment"><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+								$ docker-compose -f docker-compose.yml -f docker-compose.prod.yml <span style="color: orange">config</span>
+								services:
+								  app:
+								    image: nginx/alpine
+								    volumes:
+								      - /absolute/path/calculated/config:/app/config:rw
+								version: '3.3'
+							</code></pre>
+						</section>
+						<section>
+							<h4> multiple files - fail </h4>
+							From great powers ... come greater fails
+							<img
+								data-src="https://blog.abevoelker.com/images/mv-rena.jpg"
+							/>
+
+						</section>
+						<section>
+							<h4> multiple files - fail </h4>
+							<pre><code class="yaml" style='font-size: 0.8em' data-trim data-noescape>
+								# docker-compose.yml
+								version: "3.3"
+								services:
+								  app:
+								    image: nginx/alpine
+								    ports:
+									- "8080:8080"
+							</code></pre>
+							<pre><code class="yaml" style='font-size: 0.8em' data-trim data-noescape>
+								# docker-compose.prod.yml
+								version: "3.3"
+								services:
+								  app:
+								    ports:
+									- "8181:8080"
+							</code></pre>
+								<pre><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+$ docker-compose -f docker-compose.yml -f docker-compose.prod.yml <span style="color: orange">config</span>
+								</code></pre>
+								<div style='font-size: 0.8em'>What will be the rendered <b>ports</b> property? </div>
+							<div class="fragment">
+								<pre><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+services:
+  app:
+    image: nginx/alpine
+    ports:
+      - "8080:8080"
+      - "8181:8080"
+version: '3.3'
+								</code></pre>
+								<div style='font-size: 0.6em'>YAML lists are appended, not overridden </div>
+							</div>
+						</section>
+						<section>
+							<h4> multiple files - the correct way </h4>
+							<pre><code class="yaml" style='font-size: 0.8em' data-trim data-noescape>
+								# docker-compose.local.yml
+								version: "3.3"
+								services:
+								  app:
+								    ports:
+									- "8080:8080"
+							</code></pre>
+							<pre><code class="yaml" style='font-size: 0.8em' data-trim data-noescape>
+								# docker-compose.prod.yml
+								version: "3.3"
+								services:
+								  app:
+								    ports:
+									- "8181:8080"
+							</code></pre>
+							<pre><code class="yaml" style='font-size: 0.8em' data-trim data-noescape>
+								# docker-compose.yml
+								version: "3.3"
+								services:
+								  app:
+								    image: my-registry/my-image:$TAG
+							</code></pre>
+							<pre class="fragment"><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+								$ TAG=v6.6.6 docker-compose -f docker-compose.yml -f docker-compose.prod.yml <span style="color: orange">config</span>
+								services:
+								  app:
+								    image: my-registry/my-image:v6.6.6
+								    ports:
+									- "8181:8080"
+								version: '3.3'
+							</code></pre>
+						</section>
+						<section>
+							<h4> multiple files - via env var </h4>
+							It's possible to use an environment variable to specify compose files.
+							<pre><code class="bash" data-trim data-noescape>
+								# .env
+								COMPOSE_FILE=docker-compose.yml:docker-compose.local.yml
+								# ":" separated string
+								TAG=latest
+							</code></pre>
+							<pre class="fragment"><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+								$ docker-compose <span style="color: orange">config</span>
+								services:
+								  app:
+								    image: my-registry/my-image:latest
+								    ports:
+									- "8080:8080"
+								version: '3.3'
+							</code></pre>
+						</section>
+					</section>
+					<!-- MULTIPLE FILES --> <!-- NETWORKING --> <section>
+						<section>
+							<div class='multiCol'>
+								<div class='col'>
+									<h2> Networking </h2>
+								</div>
+								<div class='col' style='font-size: 0.8em'>
+									docker-compose networking is flexible, and permits to use existing (external) networks,
+									and also control how the internal DNS will behave
+								</div>
+							</div>
+						</section>
+						<section>
+							<h2> Attaching to other networks - Use Case</h2>
+							<img
+								data-src="public/networking-usecase.svg"
+								width=80%
+							/>
+						</section>
+						<section>
+							<h2> Attaching to other networks - Compose</h2>
+							<pre><code
+								class="yaml"
+								style='font-size: 0.8em'
+								data-line-numbers="6-13"
+								data-trim data-noescape>
+# docker-compose.serviceB.yml
+version: '3.7'
+services:
+  serviceB:
+    build: { "context": "." }
+    networks:
+      otherComposeNetwork:
+        aliases:
+          - ${NETWORK_SERVICE_ALIAS:-serviceB}
+networks:
+  otherComposeNetwork:
+    external:
+      name: ${NETWORK_NAME:-crystal_framework}
+							</code></pre>
+							<div class="fragment">
+								<pre><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+$ docker network list
+NETWORK ID          NAME                     DRIVER              SCOPE
+b753eefc8242        <span style="color: orange">somecompose_network</span>      bridge              local
+
+$ docker-compose -f other-compose.yml stop <span style="color: orange">serviceName</span>
+
+$ export NETWORK_SERVICE_ALIAS=<span style="color: orange">serviceName</span>
+$ export NETWORK_NAME=<span style="color: orange">somecompose_network</span>
+$ docker-compose <span style="color: orange">up</span>
+								</code></pre>
+								Et voila'!
+							</div>
+						</section>
+					</section>
+					<!-- NETWORKING -->
+					<!-- COMMANDS -->
+					<section>
+						<h2>Commands</h2>
+						It's possible to <span style="color: orange">exec</span> into running containers.
+						<br/>
+						Very useful for running integration/e2e tests!
+						<pre class="fragment"><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+							$ docker-compose <span style="color: orange">exec</span> serviceName npm integration
+						</code></pre>
+					</section>
+					<!-- COMMANDS -->
+					<!-- ANCHORS -->
+					<section>
+						<h2>Anchors</h2>
+						Docker-compose will ignore "x-" keys in validation, in that way is possible to use
+						normal YAML anchors.
+							<div class='multiCol'>
+								<div class='col'>
+									<pre class="stretch"><code
+										class="yaml"
+										style='font-size: 0.8em'
+										data-line-numbers="2,3,12,15"
+										data-trim data-noescape>
+version: '3.4'
+x-logging:
+  &default-logging
+  options:
+    max-size: '12m'
+    max-file: '5'
+  driver: json-file
+
+services:
+  web:
+    image: myapp/web:latest
+    logging: *default-logging
+  db:
+    image: mysql:latest
+    logging: *default-logging
+									</code></pre>
+								</div>
+								<div class="col fragment">
+									<pre class="stretch"><code class="shell" style='font-size: 0.8em' data-trim data-noescape>
+$ docker-compose <span style="color: orange">config</span>
+services:
+  db:
+    image: mysql:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '5'
+        max-size: 12m
+  web:
+    image: myapp/web:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '5'
+        max-size: 12m
+version: '3.4'
+									</code></pre>
+								</div>
+							</div>
+					</section>
+					<!-- ANCHORS -->
+					<!-- LINKS -->
+					<section>
+						<h2>Useful links</h2>
+						<ul>
+							<li>
+								<a target="_blank" href="https://docs.docker.com/compose/environment-variables/">
+									Environment variables
+								</a>
+							</li>
+							<li>
+								<a target="_blank" href="https://docs.docker.com/compose/reference/envvars/">
+									CLI Environment variables
+								</a>
+							</li>
+							<li>
+								<a target="_blank" href="https://docs.docker.com/compose/env-file/">
+									Env file
+								</a>
+							</li>
+							<li>
+								<a target="_blank" href="https://docs.docker.com/compose/extends/">
+									Multiple files and "extends"
+								</a>
+							</li>
+							<li>
+								<a target="_blank" href="https://docs.docker.com/compose/startup-order/">
+									Startup order
+								</a>
+							</li>
+							<li>
+								<a target="_blank" href="https://docs.docker.com/compose/networking/">
+									Networking
+								</a>
+							</li>
+						</ul>
+					</section>
+					<!-- LINKS -->
+					<!-- QA/BYE -->
+					<section>
+						<h2>Q & A❓</h2>
+						<h2 class="fragment"> Thanks! Bye! 👋 </h2>
+					</section>
+					<!-- QA/BYE -->
+				</div>
+			</div>
+		</div>
+
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				hash: true,
+				 width: 1440,
+				height: 900,
+
+				// Factor of the display size that should remain empty around the content
+				margin: 0.1,
+				minScale: 0.2,
+				maxScale: 1.0,
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true }
+				],
+				keyboard: {
+					38: 'next', // Up
+					40: 'prev', // Down
+					9: Reveal.toggleOverview, // Tab
+				},
+			});
+		</script>
+	</body>
+</html>
