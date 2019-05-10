@@ -495,17 +495,18 @@ version: '3.4'
 				margin: 0.1,
 				minScale: 0.2,
 				maxScale: 1.0,
+				pdfSeparateFragments: false,
 				dependencies: [
 					{ src: 'plugin/markdown/marked.js' },
 					{ src: 'plugin/markdown/markdown.js' },
 					{ src: 'plugin/notes/notes.js', async: true },
 					{ src: 'plugin/highlight/highlight.js', async: true }
 				],
-				keyboard: {
-					38: 'next', // Up
-					40: 'prev', // Down
-					9: Reveal.toggleOverview, // Tab
-				},
+				// keyboard: {
+				// 	38: 'next', // Up
+				// 	40: 'prev', // Down
+				// 	9: Reveal.toggleOverview, // Tab
+				// },
 			});
 		</script>
 	</body>
