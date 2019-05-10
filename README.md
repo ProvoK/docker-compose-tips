@@ -1,0 +1,6 @@
+# Docker-compose tip
+
+This is a presentation done for knowledge sharing in the workplace.
+
+It's based on Reveal.js, so it can be started simply with:
+`npm start`
