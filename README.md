@@ -9,3 +9,7 @@ cd compose-tips
 npm i
 npm start
 ```
+
+## PDF Slides
+
+https://github.com/ProvoK/docker-compose-tips/raw/master/slides.pdf
